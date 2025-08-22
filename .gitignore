@@ -22,3 +22,9 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# Claude Code settings
+# CLAUDE.md - プロジェクト固有のClaude Code向け指示・設定ファイル（開発者ごとにカスタマイズ可能）
+CLAUDE.md
+# .claude/ - Claude Code関連の設定ディレクトリ（将来的な拡張用）
+.claude/
