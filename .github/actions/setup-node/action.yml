@@ -16,7 +16,3 @@ runs:
     - name: Install dependencies
       shell: bash
       run: pnpm install --frozen-lockfile
-
-    - name: Generate types
-      shell: bash
-      run: pnpm wrangler types
