@@ -20,11 +20,11 @@ const randomNumber = Math.floor(Math.random() * 1000);
 
 // Cloudflare環境の場合、環境情報を取得
 const runtime = Astro.locals.runtime;
-const cfInfo = runtime?.cf ? {
-  country: runtime.cf.country || "不明",
-  city: runtime.cf.city || "不明",
-  timezone: runtime.cf.timezone || "不明",
-} : null;
+const cfInfo = {
+  country: runtime.cf?.country || "不明",
+  city: runtime.cf?.city || "不明",
+  timezone: runtime.cf?.timezone || "不明",
+};
 ---
 
 <Layout>
@@ -32,9 +32,9 @@ const cfInfo = runtime?.cf ? {
     <nav>
       <a href="/">← トップに戻る</a>
     </nav>
-    
+
     <h1>動的レンダリングページ (SSR)</h1>
-    
+
     <section>
       <h2>このページについて</h2>
       <p>
@@ -43,44 +43,36 @@ const cfInfo = runtime?.cf ? {
         Astroに対してこのページをSSR（サーバーサイドレンダリング）で処理するよう指示しています。
       </p>
     </section>
-    
+
     <section>
       <h2>現在時刻</h2>
       <p class="current-time">
         現在時刻: <time>{currentTime}</time>
       </p>
-      <p class="note">
-        ※ この時刻はページをリロードするたびに更新されます。
-      </p>
+      <p class="note">※ この時刻はページをリロードするたびに更新されます。</p>
     </section>
-    
+
     <section>
       <h2>ランダム値</h2>
       <p class="random-number">
         ランダム値: <span>{randomNumber}</span>
       </p>
-      <p class="note">
-        ※ この値もリロードするたびに変わります。
-      </p>
+      <p class="note">※ この値もリロードするたびに変わります。</p>
     </section>
-    
-    {cfInfo && (
-      <section>
-        <h2>Cloudflare環境情報</h2>
-        <dl>
-          <dt>国:</dt>
-          <dd>{cfInfo.country}</dd>
-          <dt>都市:</dt>
-          <dd>{cfInfo.city}</dd>
-          <dt>タイムゾーン:</dt>
-          <dd>{cfInfo.timezone}</dd>
-        </dl>
-        <p class="note">
-          ※ Cloudflare Workers環境でのみ表示されます。
-        </p>
-      </section>
-    )}
-    
+
+    <section>
+      <h2>Cloudflare環境情報</h2>
+      <dl>
+        <dt>国:</dt>
+        <dd>{cfInfo.country}</dd>
+        <dt>都市:</dt>
+        <dd>{cfInfo.city}</dd>
+        <dt>タイムゾーン:</dt>
+        <dd>{cfInfo.timezone}</dd>
+      </dl>
+      <p class="note">※ Cloudflare Workers環境でのみ表示されます。</p>
+    </section>
+
     <section>
       <h2>動的レンダリングのメリット</h2>
       <ul>
@@ -90,7 +82,7 @@ const cfInfo = runtime?.cf ? {
         <li>認証・認可処理</li>
       </ul>
     </section>
-    
+
     <section>
       <h2>使用例</h2>
       <ul>
@@ -109,54 +101,56 @@ const cfInfo = runtime?.cf ? {
     margin: 2rem auto;
     padding: 0 1rem;
   }
-  
+
   nav {
     margin-bottom: 2rem;
   }
-  
+
   nav a {
     color: #4f39fa;
     text-decoration: none;
   }
-  
+
   nav a:hover {
     text-decoration: underline;
   }
-  
+
   h1 {
     color: #333;
     margin-bottom: 1rem;
   }
-  
+
   h2 {
     color: #555;
     margin-top: 2rem;
     margin-bottom: 1rem;
   }
-  
+
   section {
     margin-bottom: 2rem;
   }
-  
-  .current-time, .random-number {
+
+  .current-time,
+  .random-number {
     font-size: 1.2rem;
     padding: 1rem;
     background-color: #e8f5e9;
     border-radius: 8px;
     margin: 1rem 0;
   }
-  
-  .current-time time, .random-number span {
+
+  .current-time time,
+  .random-number span {
     font-weight: bold;
     color: #2e7d32;
   }
-  
+
   .note {
     color: #666;
     font-size: 0.9rem;
     font-style: italic;
   }
-  
+
   code {
     background-color: #f5f5f5;
     padding: 0.2rem 0.4rem;
@@ -164,36 +158,36 @@ const cfInfo = runtime?.cf ? {
     font-family: monospace;
     font-size: 0.9rem;
   }
-  
+
   dl {
     background-color: #f0f4ff;
     padding: 1rem;
     border-radius: 8px;
   }
-  
+
   dt {
     font-weight: bold;
     color: #333;
     display: inline-block;
     width: 120px;
   }
-  
+
   dd {
     display: inline;
     margin: 0;
     color: #666;
   }
-  
+
   ul {
     list-style-position: inside;
     line-height: 1.8;
   }
-  
+
   p {
     line-height: 1.6;
     color: #666;
   }
-  
+
   strong {
     color: #333;
   }
