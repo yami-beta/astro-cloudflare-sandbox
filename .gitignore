@@ -28,3 +28,6 @@ pnpm-debug.log*
 CLAUDE.md
 # .claude/ - Claude Code関連の設定ディレクトリ（将来的な拡張用）
 .claude/
+
+# Wrangler generated types
+worker-configuration.d.ts

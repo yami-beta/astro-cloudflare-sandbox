@@ -1,0 +1,221 @@
+---
+import Layout from "../../layouts/Layout.astro";
+
+// 静的パスを生成
+export async function getStaticPaths() {
+  // サンプルのブログ記事データ
+  const posts = [
+    {
+      slug: "first-post",
+      title: "最初のブログ記事",
+      content: "これは静的に生成される最初のブログ記事です。Astroの`getStaticPaths`関数を使用して、ビルド時に各記事のHTMLページを生成しています。",
+      author: "田中太郎",
+      publishedAt: "2024-01-15",
+      tags: ["Astro", "静的サイト生成", "ブログ"],
+    },
+    {
+      slug: "second-post",
+      title: "Cloudflare Workersについて",
+      content: "Cloudflare Workersは、エッジコンピューティングプラットフォームです。世界中のCloudflareのネットワークエッジでJavaScriptを実行できます。",
+      author: "鈴木花子",
+      publishedAt: "2024-01-20",
+      tags: ["Cloudflare", "エッジコンピューティング", "サーバーレス"],
+    },
+    {
+      slug: "third-post",
+      title: "AstroとCloudflareの組み合わせ",
+      content: "AstroとCloudflare Workersを組み合わせることで、高速で拡張性の高いWebアプリケーションを構築できます。静的コンテンツとエッジでの動的処理を組み合わせることが可能です。",
+      author: "佐藤次郎",
+      publishedAt: "2024-01-25",
+      tags: ["Astro", "Cloudflare", "パフォーマンス"],
+    },
+  ];
+
+  // 各記事に対してパスとpropsを生成
+  return posts.map((post) => ({
+    params: { slug: post.slug },
+    props: { post },
+  }));
+}
+
+// propsからpostデータを受け取る
+const { post } = Astro.props;
+
+// ビルド時刻を記録
+const buildTime = new Date().toLocaleString("ja-JP", {
+  timeZone: "Asia/Tokyo",
+});
+---
+
+<Layout>
+  <main>
+    <nav>
+      <a href="/">← トップに戻る</a>
+    </nav>
+    
+    <article>
+      <header>
+        <h1>{post.title}</h1>
+        <div class="meta">
+          <span class="author">著者: {post.author}</span>
+          <time datetime={post.publishedAt}>
+            公開日: {new Date(post.publishedAt).toLocaleDateString("ja-JP")}
+          </time>
+        </div>
+        <div class="tags">
+          {post.tags.map((tag) => (
+            <span class="tag">{tag}</span>
+          ))}
+        </div>
+      </header>
+      
+      <div class="content">
+        <p>{post.content}</p>
+      </div>
+      
+      <footer>
+        <div class="build-info">
+          <p>このページは静的に生成されました</p>
+          <p class="build-time">ビルド時刻: {buildTime}</p>
+        </div>
+      </footer>
+    </article>
+    
+    <section class="explanation">
+      <h2>静的生成について</h2>
+      <p>
+        このブログ記事は<code>getStaticPaths()</code>関数を使用して、
+        ビルド時に静的HTMLとして生成されています。
+        動的ルート<code>[slug].astro</code>を使用していますが、
+        実際には各記事がビルド時に個別のHTMLファイルとして出力されます。
+      </p>
+      <ul>
+        <li><a href="/blog/first-post">最初のブログ記事</a></li>
+        <li><a href="/blog/second-post">Cloudflare Workersについて</a></li>
+        <li><a href="/blog/third-post">AstroとCloudflareの組み合わせ</a></li>
+      </ul>
+    </section>
+  </main>
+</Layout>
+
+<style>
+  main {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+  }
+  
+  nav {
+    margin-bottom: 2rem;
+  }
+  
+  nav a {
+    color: #4f39fa;
+    text-decoration: none;
+  }
+  
+  nav a:hover {
+    text-decoration: underline;
+  }
+  
+  article {
+    margin-bottom: 3rem;
+  }
+  
+  header {
+    margin-bottom: 2rem;
+  }
+  
+  h1 {
+    color: #333;
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+  
+  h2 {
+    color: #555;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+  }
+  
+  .meta {
+    display: flex;
+    gap: 2rem;
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+  }
+  
+  .tags {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  
+  .tag {
+    background-color: #f0f0f0;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.85rem;
+    color: #555;
+  }
+  
+  .content {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #333;
+    margin: 2rem 0;
+  }
+  
+  footer {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid #e0e0e0;
+  }
+  
+  .build-info {
+    background-color: #f5f5f5;
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+  }
+  
+  .build-info p {
+    margin: 0.5rem 0;
+    color: #666;
+  }
+  
+  .build-time {
+    font-size: 0.9rem;
+    color: #999;
+  }
+  
+  .explanation {
+    background-color: #f9f9f9;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-top: 2rem;
+  }
+  
+  .explanation ul {
+    margin-top: 1rem;
+    list-style-position: inside;
+  }
+  
+  .explanation a {
+    color: #4f39fa;
+    text-decoration: none;
+  }
+  
+  .explanation a:hover {
+    text-decoration: underline;
+  }
+  
+  code {
+    background-color: #f0f0f0;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.9rem;
+  }
+</style>

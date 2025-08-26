@@ -1,0 +1,284 @@
+---
+import Layout from "../../layouts/Layout.astro";
+
+// SSRを有効にする（動的レンダリング）
+export const prerender = false;
+
+// URLパラメータからユーザーIDを取得
+const { id } = Astro.params;
+
+// ダミーユーザーデータを動的に生成
+// 実際のアプリケーションでは、ここでデータベースやAPIから取得
+const generateUserData = (userId: string) => {
+  // IDをシードとして使用して一貫性のあるダミーデータを生成
+  const hash = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  
+  const names = ["田中太郎", "鈴木花子", "佐藤次郎", "高橋美咲", "山田健太"];
+  const jobs = ["エンジニア", "デザイナー", "プロダクトマネージャー", "データサイエンティスト", "マーケター"];
+  const locations = ["東京", "大阪", "名古屋", "福岡", "札幌"];
+  
+  return {
+    id: userId,
+    name: names[hash % names.length],
+    job: jobs[hash % jobs.length],
+    location: locations[hash % locations.length],
+    joinedDate: new Date(2020 + (hash % 5), hash % 12, (hash % 28) + 1).toLocaleDateString("ja-JP"),
+    posts: Math.floor(hash / 10) + 5,
+    followers: hash * 13,
+    following: hash * 7,
+  };
+};
+
+const user = generateUserData(id as string);
+
+// 現在時刻を取得（動的レンダリングの証明）
+const currentTime = new Date().toLocaleString("ja-JP", {
+  timeZone: "Asia/Tokyo",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+});
+---
+
+<Layout>
+  <main>
+    <nav>
+      <a href="/">← トップに戻る</a>
+    </nav>
+    
+    <div class="user-profile">
+      <h1>ユーザープロフィール</h1>
+      
+      <div class="profile-card">
+        <div class="avatar">
+          <div class="avatar-placeholder">
+            {user.name.charAt(0)}
+          </div>
+        </div>
+        
+        <div class="user-info">
+          <h2>{user.name}</h2>
+          <p class="user-id">ID: {user.id}</p>
+          <p class="job">{user.job}</p>
+          <p class="location">📍 {user.location}</p>
+          <p class="joined">登録日: {user.joinedDate}</p>
+        </div>
+        
+        <div class="stats">
+          <div class="stat">
+            <span class="stat-value">{user.posts}</span>
+            <span class="stat-label">投稿</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value">{user.followers}</span>
+            <span class="stat-label">フォロワー</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value">{user.following}</span>
+            <span class="stat-label">フォロー中</span>
+          </div>
+        </div>
+      </div>
+      
+      <section class="dynamic-info">
+        <h3>動的レンダリング情報</h3>
+        <p>
+          このページは<strong>リクエストごとに動的に生成</strong>されています。
+          URLの<code>[id]</code>パラメータを使用してユーザー情報を表示します。
+        </p>
+        <p class="render-time">
+          レンダリング時刻: <time>{currentTime}</time>
+        </p>
+      </section>
+      
+      <section class="try-other-users">
+        <h3>他のユーザーも見てみよう</h3>
+        <p>URLのIDを変更すると、異なるユーザー情報が表示されます：</p>
+        <ul>
+          <li><a href="/user/123">ユーザー 123</a></li>
+          <li><a href="/user/456">ユーザー 456</a></li>
+          <li><a href="/user/789">ユーザー 789</a></li>
+          <li><a href="/user/abc">ユーザー abc</a></li>
+          <li><a href="/user/xyz">ユーザー xyz</a></li>
+        </ul>
+      </section>
+    </div>
+  </main>
+</Layout>
+
+<style>
+  main {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+  }
+  
+  nav {
+    margin-bottom: 2rem;
+  }
+  
+  nav a {
+    color: #4f39fa;
+    text-decoration: none;
+  }
+  
+  nav a:hover {
+    text-decoration: underline;
+  }
+  
+  h1 {
+    color: #333;
+    margin-bottom: 2rem;
+  }
+  
+  h3 {
+    color: #555;
+    margin-bottom: 1rem;
+  }
+  
+  .profile-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+  }
+  
+  .avatar {
+    display: inline-block;
+    margin-bottom: 1rem;
+  }
+  
+  .avatar-placeholder {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2rem;
+    font-weight: bold;
+  }
+  
+  .user-info {
+    margin-bottom: 2rem;
+  }
+  
+  .user-info h2 {
+    color: #333;
+    margin-bottom: 0.5rem;
+  }
+  
+  .user-info p {
+    margin: 0.25rem 0;
+    color: #666;
+  }
+  
+  .user-id {
+    font-family: monospace;
+    color: #999;
+    font-size: 0.9rem;
+  }
+  
+  .job {
+    font-weight: 500;
+    color: #4f39fa;
+  }
+  
+  .stats {
+    display: flex;
+    gap: 2rem;
+    border-top: 1px solid #e0e0e0;
+    padding-top: 1rem;
+  }
+  
+  .stat {
+    text-align: center;
+  }
+  
+  .stat-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #333;
+  }
+  
+  .stat-label {
+    display: block;
+    font-size: 0.9rem;
+    color: #999;
+    margin-top: 0.25rem;
+  }
+  
+  .dynamic-info {
+    background-color: #f9f9f9;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+  }
+  
+  .render-time {
+    background-color: #e8f5e9;
+    padding: 0.75rem;
+    border-radius: 6px;
+    margin-top: 1rem;
+    font-family: monospace;
+  }
+  
+  .render-time time {
+    color: #2e7d32;
+    font-weight: bold;
+  }
+  
+  .try-other-users {
+    background-color: #f0f4ff;
+    padding: 1.5rem;
+    border-radius: 8px;
+  }
+  
+  .try-other-users ul {
+    list-style: none;
+    padding: 0;
+    margin-top: 1rem;
+  }
+  
+  .try-other-users li {
+    display: inline-block;
+    margin-right: 1rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .try-other-users a {
+    color: #4f39fa;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    background-color: white;
+    border: 1px solid #4f39fa;
+    border-radius: 20px;
+    display: inline-block;
+    transition: all 0.2s;
+  }
+  
+  .try-other-users a:hover {
+    background-color: #4f39fa;
+    color: white;
+  }
+  
+  code {
+    background-color: #f0f0f0;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.9rem;
+  }
+  
+  strong {
+    color: #333;
+  }
+</style>

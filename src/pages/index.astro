@@ -1,11 +1,92 @@
 ---
-import Welcome from "../components/Welcome.astro";
 import Layout from "../layouts/Layout.astro";
-
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
 ---
 
 <Layout>
-  <Welcome />
+  <main>
+    <h1>Astro + Cloudflare サンプルページ</h1>
+    <p>このプロジェクトでは、Astroの様々なレンダリング方式を確認できます。</p>
+    
+    <section>
+      <h2>📄 静的レンダリング (Static Rendering)</h2>
+      <p>ビルド時に生成される静的なHTMLページです。</p>
+      <ul>
+        <li>
+          <a href="/static">静的ページサンプル</a> - ビルド時刻を表示
+        </li>
+        <li>
+          <a href="/blog/first-post">ブログ記事1</a> - getStaticPaths()で事前生成
+        </li>
+        <li>
+          <a href="/blog/second-post">ブログ記事2</a> - getStaticPaths()で事前生成
+        </li>
+      </ul>
+    </section>
+    
+    <section>
+      <h2>🚀 動的レンダリング (On-demand Rendering / SSR)</h2>
+      <p>リクエスト時にサーバー側で動的に生成されるページです。</p>
+      <ul>
+        <li>
+          <a href="/dynamic">動的ページサンプル</a> - 現在時刻を表示
+        </li>
+        <li>
+          <a href="/user/123">ユーザーページ (ID: 123)</a> - URLパラメータを使用
+        </li>
+        <li>
+          <a href="/user/456">ユーザーページ (ID: 456)</a> - URLパラメータを使用
+        </li>
+        <li>
+          <a href="/api/time.json">APIエンドポイント</a> - JSON形式で現在時刻を返却
+        </li>
+      </ul>
+    </section>
+  </main>
 </Layout>
+
+<style>
+  main {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+  }
+  
+  h1 {
+    color: #333;
+    margin-bottom: 1rem;
+  }
+  
+  h2 {
+    color: #555;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+  }
+  
+  section {
+    margin-bottom: 2rem;
+  }
+  
+  ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  li {
+    margin: 0.5rem 0;
+  }
+  
+  a {
+    color: #4f39fa;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  
+  a:hover {
+    text-decoration: underline;
+  }
+  
+  p {
+    color: #666;
+    line-height: 1.6;
+  }
+</style>
