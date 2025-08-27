@@ -1,0 +1,324 @@
+---
+import Layout from "./Layout.astro";
+
+const { frontmatter, headings } = Astro.props;
+const formattedDate = frontmatter.date
+  ? new Date(frontmatter.date).toLocaleDateString("ja-JP", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
+  : null;
+---
+
+<Layout>
+  <main>
+    <nav class="breadcrumb">
+      <a href="/">← トップに戻る</a>
+    </nav>
+
+    <article>
+      <header>
+        <h1>{frontmatter.title}</h1>
+
+        {
+          frontmatter.description && (
+            <p class="description">{frontmatter.description}</p>
+          )
+        }
+
+        <div class="metadata">
+          {
+            frontmatter.author && (
+              <span class="author">著者: {frontmatter.author}</span>
+            )
+          }
+          {
+            formattedDate && (
+              <time datetime={frontmatter.date}>公開日: {formattedDate}</time>
+            )
+          }
+        </div>
+
+        {
+          frontmatter.tags && frontmatter.tags.length > 0 && (
+            <div class="tags">
+              {frontmatter.tags.map((tag: string) => (
+                <span class="tag">{tag}</span>
+              ))}
+            </div>
+          )
+        }
+      </header>
+
+      {
+        headings && headings.length > 0 && (
+          <nav class="toc">
+            <h2>目次</h2>
+            <ul>
+              {headings.map(
+                (heading: { depth: number; text: string; slug: string }) => (
+                  <li style={`margin-left: ${(heading.depth - 1) * 1.5}rem`}>
+                    <a href={`#${heading.slug}`}>{heading.text}</a>
+                  </li>
+                ),
+              )}
+            </ul>
+          </nav>
+        )
+      }
+
+      <div class="content">
+        <slot />
+      </div>
+
+      <footer>
+        <div class="post-info">
+          <p>このページはMarkdownファイルから生成されました</p>
+        </div>
+      </footer>
+    </article>
+  </main>
+</Layout>
+
+<style>
+  main {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+  }
+
+  .breadcrumb {
+    margin-bottom: 2rem;
+  }
+
+  .breadcrumb a {
+    color: #4f39fa;
+    text-decoration: none;
+    font-size: 0.9rem;
+  }
+
+  .breadcrumb a:hover {
+    text-decoration: underline;
+  }
+
+  article {
+    background: white;
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  header {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid #f0f0f0;
+  }
+
+  h1 {
+    color: #1a1a1a;
+    font-size: 2.5rem;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+  }
+
+  .description {
+    font-size: 1.2rem;
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+  }
+
+  .metadata {
+    display: flex;
+    gap: 2rem;
+    font-size: 0.9rem;
+    color: #888;
+    margin-bottom: 1rem;
+  }
+
+  .author {
+    font-weight: 500;
+  }
+
+  time {
+    font-style: italic;
+  }
+
+  .tags {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+  }
+
+  .tag {
+    background-color: #f4f4f9;
+    color: #4f39fa;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+
+  .toc {
+    background-color: #f9f9fc;
+    border: 1px solid #e0e0e8;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .toc h2 {
+    font-size: 1.2rem;
+    color: #333;
+    margin-bottom: 1rem;
+  }
+
+  .toc ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  .toc li {
+    margin: 0.5rem 0;
+  }
+
+  .toc a {
+    color: #4f39fa;
+    text-decoration: none;
+    font-size: 0.95rem;
+  }
+
+  .toc a:hover {
+    text-decoration: underline;
+  }
+
+  .content {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #333;
+  }
+
+  .content :global(h1),
+  .content :global(h2),
+  .content :global(h3),
+  .content :global(h4),
+  .content :global(h5),
+  .content :global(h6) {
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    color: #1a1a1a;
+  }
+
+  .content :global(h2) {
+    font-size: 1.8rem;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 0.5rem;
+  }
+
+  .content :global(h3) {
+    font-size: 1.4rem;
+  }
+
+  .content :global(p) {
+    margin: 1rem 0;
+  }
+
+  .content :global(ul),
+  .content :global(ol) {
+    margin: 1rem 0;
+    padding-left: 2rem;
+  }
+
+  .content :global(li) {
+    margin: 0.5rem 0;
+  }
+
+  .content :global(pre) {
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+    padding: 1rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 1.5rem 0;
+  }
+
+  .content :global(code) {
+    font-family: "Consolas", "Monaco", monospace;
+    font-size: 0.9rem;
+  }
+
+  .content :global(:not(pre) > code) {
+    background-color: #f4f4f9;
+    color: #d63384;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+  }
+
+  .content :global(blockquote) {
+    border-left: 4px solid #4f39fa;
+    background-color: #f9f9fc;
+    padding: 1rem;
+    margin: 1.5rem 0;
+    font-style: italic;
+  }
+
+  .content :global(table) {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+  }
+
+  .content :global(th),
+  .content :global(td) {
+    padding: 0.75rem;
+    border: 1px solid #e0e0e0;
+  }
+
+  .content :global(th) {
+    background-color: #f4f4f9;
+    font-weight: 600;
+  }
+
+  .content :global(img) {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin: 1.5rem 0;
+  }
+
+  .content :global(a) {
+    color: #4f39fa;
+    text-decoration: underline;
+  }
+
+  .content :global(a:hover) {
+    color: #3628c8;
+  }
+
+  .content :global(hr) {
+    border: none;
+    border-top: 1px solid #e0e0e0;
+    margin: 2rem 0;
+  }
+
+  footer {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid #e0e0e0;
+  }
+
+  .post-info {
+    background-color: #f9f9fc;
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+  }
+
+  .post-info p {
+    margin: 0;
+    color: #666;
+    font-size: 0.9rem;
+  }
+</style>
