@@ -1,7 +1,7 @@
 ---
 layout: ../layouts/MarkdownPost.astro
 title: "Markdownサンプルページ"
-author: "山田太郎"
+author: "yami-beta"
 date: "2024-01-30"
 description: "AstroでMarkdownページを作成するサンプルです。様々なMarkdown記法を紹介しています。"
 tags: ["Markdown", "Astro", "サンプル"]
