@@ -1,0 +1,328 @@
+---
+import { getCollection } from "astro:content";
+import Layout from "../../layouts/Layout.astro";
+
+const releases = await getCollection("releases");
+const sortedReleases = releases.sort(
+  (a, b) => b.data.date.getTime() - a.data.date.getTime(),
+);
+
+function getCategoryBadgeClass(category: string) {
+  switch (category) {
+    case "major":
+      return "badge-major";
+    case "minor":
+      return "badge-minor";
+    case "patch":
+      return "badge-patch";
+    default:
+      return "badge-default";
+  }
+}
+---
+
+<Layout>
+  <main>
+    <header class="page-header">
+      <h1>リリースノート</h1>
+      <p>プロダクトの更新履歴とバージョン情報</p>
+    </header>
+
+    <nav class="breadcrumb">
+      <a href="/">ホーム</a> / リリースノート
+    </nav>
+
+    <div class="releases-grid">
+      {
+        sortedReleases.map((release) => (
+          <article class="release-card">
+            <div class="release-header">
+              <h2>
+                <a href={`/releases/${release.id}`}>
+                  バージョン {release.data.version}
+                </a>
+              </h2>
+              <div class="badges">
+                <span
+                  class={`badge ${getCategoryBadgeClass(release.data.category)}`}
+                >
+                  {release.data.category.toUpperCase()}
+                </span>
+                {release.data.breaking && (
+                  <span class="badge badge-breaking">Breaking Change</span>
+                )}
+              </div>
+            </div>
+
+            <time datetime={release.data.date.toISOString()}>
+              {release.data.date.toLocaleDateString("ja-JP", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
+            </time>
+
+            <div class="release-summary">
+              {release.data.features && release.data.features.length > 0 && (
+                <div class="summary-section">
+                  <h3>✨ 新機能</h3>
+                  <ul>
+                    {release.data.features.slice(0, 3).map((feature) => (
+                      <li>{feature}</li>
+                    ))}
+                    {release.data.features.length > 3 && (
+                      <li class="more">
+                        他 {release.data.features.length - 3} 件...
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              )}
+
+              {release.data.fixes && release.data.fixes.length > 0 && (
+                <div class="summary-section">
+                  <h3>🐛 修正</h3>
+                  <ul>
+                    {release.data.fixes.slice(0, 2).map((fix) => (
+                      <li>{fix}</li>
+                    ))}
+                    {release.data.fixes.length > 2 && (
+                      <li class="more">
+                        他 {release.data.fixes.length - 2} 件...
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            <a href={`/releases/${release.id}`} class="read-more">
+              詳細を見る →
+            </a>
+          </article>
+        ))
+      }
+    </div>
+
+    <section class="info-section">
+      <h2>Content Collections について</h2>
+      <p>
+        このページは Astro の Content Collections
+        機能を使用して構築されています。 リリースノートは <code
+          >src/data/releases/</code
+        > ディレクトリの Markdown ファイルとして管理され、 型安全なスキーマによって検証されています。
+      </p>
+      <ul>
+        <li>Zodスキーマによるフロントマター検証</li>
+        <li>TypeScript による型安全性</li>
+        <li>ビルド時の静的生成</li>
+        <li>自動的なルーティング生成</li>
+      </ul>
+    </section>
+  </main>
+</Layout>
+
+<style>
+  main {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+  }
+
+  .page-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .page-header h1 {
+    font-size: 2.5rem;
+    color: #333;
+    margin-bottom: 0.5rem;
+  }
+
+  .page-header p {
+    color: #666;
+    font-size: 1.1rem;
+  }
+
+  .breadcrumb {
+    margin-bottom: 2rem;
+    color: #666;
+  }
+
+  .breadcrumb a {
+    color: #4f39fa;
+    text-decoration: none;
+  }
+
+  .breadcrumb a:hover {
+    text-decoration: underline;
+  }
+
+  .releases-grid {
+    display: grid;
+    gap: 2rem;
+    margin-bottom: 3rem;
+  }
+
+  .release-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 2rem;
+    transition: box-shadow 0.2s;
+  }
+
+  .release-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .release-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .release-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+  }
+
+  .release-header h2 a {
+    color: #333;
+    text-decoration: none;
+  }
+
+  .release-header h2 a:hover {
+    color: #4f39fa;
+  }
+
+  .badges {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .badge-major {
+    background-color: #ffe4e1;
+    color: #d32f2f;
+  }
+
+  .badge-minor {
+    background-color: #e3f2fd;
+    color: #1976d2;
+  }
+
+  .badge-patch {
+    background-color: #f0f0f0;
+    color: #666;
+  }
+
+  .badge-breaking {
+    background-color: #fff3cd;
+    color: #856404;
+  }
+
+  time {
+    display: block;
+    color: #666;
+    margin-bottom: 1rem;
+  }
+
+  .release-summary {
+    margin: 1.5rem 0;
+  }
+
+  .summary-section {
+    margin-bottom: 1rem;
+  }
+
+  .summary-section h3 {
+    font-size: 1rem;
+    color: #555;
+    margin-bottom: 0.5rem;
+  }
+
+  .summary-section ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .summary-section li {
+    padding: 0.25rem 0;
+    padding-left: 1rem;
+    color: #666;
+    position: relative;
+  }
+
+  .summary-section li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+  }
+
+  .summary-section li.more {
+    font-style: italic;
+    color: #999;
+  }
+
+  .read-more {
+    display: inline-block;
+    color: #4f39fa;
+    text-decoration: none;
+    font-weight: 500;
+    margin-top: 1rem;
+  }
+
+  .read-more:hover {
+    text-decoration: underline;
+  }
+
+  .info-section {
+    background-color: #f9f9f9;
+    padding: 2rem;
+    border-radius: 12px;
+  }
+
+  .info-section h2 {
+    color: #333;
+    margin-bottom: 1rem;
+  }
+
+  .info-section p {
+    color: #666;
+    margin-bottom: 1rem;
+    line-height: 1.6;
+  }
+
+  .info-section ul {
+    list-style-position: inside;
+    color: #666;
+    line-height: 1.8;
+  }
+
+  code {
+    background-color: #f0f0f0;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.9rem;
+  }
+
+  @media (max-width: 768px) {
+    .release-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+</style>
