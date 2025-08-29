@@ -8,16 +8,25 @@ export const prerender = false;
 // URLパラメータからslugを取得
 const { slug } = Astro.params;
 
+// 現在時刻を取得（未公開リリースのチェック用）
+const now = new Date();
+
 // Content Collectionsからリリースノートを取得
-const releases = await getCollection("releases");
+const allReleases = await getCollection("releases");
 
 // 指定されたslugのリリースを見つける
-const release = releases.find((r) => r.id === slug);
+const release = allReleases.find((r) => r.id === slug);
 
-// リリースが見つからない場合は404を返す
-if (!release) {
-  return Astro.redirect("/404");
+// リリースが見つからない、または未公開（未来の日付）の場合は404を返す
+if (!release || release.data.date > now) {
+  return new Response(null, {
+    status: 404,
+    statusText: "Not Found",
+  });
 }
+
+// 公開済みリリースのみをフィルタリング（ナビゲーション用）
+const releases = allReleases.filter((r) => r.data.date <= now);
 
 // リリースをレンダリング
 const { Content } = await render(release);
