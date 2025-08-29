@@ -16,8 +16,8 @@ jobs:
       - name: Setup Node.js and install dependencies
         uses: ./.github/actions/setup-node
 
-      - name: Check format
-        run: pnpm lint:prettier
+      - name: Lint
+        run: pnpm lint
 
   typecheck:
     runs-on: ubuntu-latest
