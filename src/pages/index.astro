@@ -53,22 +53,30 @@ import Layout from "../layouts/Layout.astro";
     </section>
 
     <section>
-      <h2>📦 Content Collections</h2>
+      <h2>📦 Content Collections（静的生成版）</h2>
       <p>Astroの Content Collections API を使用したコンテンツ管理の例です。</p>
       <ul>
         <li>
-          <a href="/releases">リリースノート一覧</a> - 全バージョンのリリースノート
-        </li>
-        <li>
-          <a href="/releases/v2-0-0">バージョン 2.0.0</a> - メジャーアップデート
-        </li>
-        <li>
-          <a href="/releases/v1-5-0">バージョン 1.5.0</a> - マイナーアップデート
-        </li>
-        <li>
-          <a href="/releases/v1-0-0">バージョン 1.0.0</a> - 初回リリース
+          <a href="/releases">リリースノート一覧（静的版）</a> - ビルド時に生成される静的ページ
         </li>
       </ul>
+    </section>
+
+    <section>
+      <h2>🚀 Content Collections（Server Output版）</h2>
+      <p>
+        Content Collections APIをServer
+        Output（SSR）で使用した動的生成の例です。
+      </p>
+      <ul>
+        <li>
+          <a href="/releases-server">リリースノート一覧（Server版）</a> - フィルタリング機能付きの動的ページ
+        </li>
+      </ul>
+      <p class="note">
+        ※ Server Output版では、リクエスト時に動的にページが生成され、
+        URLパラメータによるフィルタリングやリアルタイムデータの表示が可能です。
+      </p>
     </section>
   </main>
 </Layout>
@@ -117,5 +125,14 @@ import Layout from "../layouts/Layout.astro";
   p {
     color: #666;
     line-height: 1.6;
+  }
+
+  .note {
+    background-color: #f0f4ff;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    border-left: 4px solid #4f39fa;
+    font-size: 0.9rem;
+    margin-top: 1rem;
   }
 </style>
