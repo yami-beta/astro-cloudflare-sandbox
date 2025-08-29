@@ -1,0 +1,525 @@
+---
+import { getCollection, render } from "astro:content";
+import Layout from "../../layouts/Layout.astro";
+
+// Server Output（SSR）を有効化
+export const prerender = false;
+
+// URLパラメータからslugを取得
+const { slug } = Astro.params;
+
+// Content Collectionsからリリースノートを取得
+const releases = await getCollection("releases");
+
+// 指定されたslugのリリースを見つける
+const release = releases.find((r) => r.id === slug);
+
+// リリースが見つからない場合は404を返す
+if (!release) {
+  return Astro.redirect("/404");
+}
+
+// リリースをレンダリング
+const { Content } = await render(release);
+
+// 前後のリリースを見つける（ナビゲーション用）
+const sortedReleases = releases.sort(
+  (a, b) => b.data.date.getTime() - a.data.date.getTime(),
+);
+
+const currentIndex = sortedReleases.findIndex((r) => r.id === slug);
+const prevRelease =
+  currentIndex < sortedReleases.length - 1
+    ? sortedReleases[currentIndex + 1]
+    : null;
+const nextRelease = currentIndex > 0 ? sortedReleases[currentIndex - 1] : null;
+
+// アクセス時刻を取得（動的生成の証明）
+const accessTime = new Date().toLocaleString("ja-JP", {
+  timeZone: "Asia/Tokyo",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+});
+
+// 閲覧数（実際のDBを使用する場合の例）
+const viewCount = Math.floor(Math.random() * 5000) + 100;
+
+function getCategoryBadgeClass(category: string) {
+  switch (category) {
+    case "major":
+      return "badge-major";
+    case "minor":
+      return "badge-minor";
+    case "patch":
+      return "badge-patch";
+    default:
+      return "badge-default";
+  }
+}
+---
+
+<Layout>
+  <main>
+    <nav class="breadcrumb">
+      <a href="/">ホーム</a> /
+      <a href="/releases-server">リリースノート（Server版）</a> / バージョン {
+        release.data.version
+      }
+    </nav>
+
+    <article class="release-detail">
+      <header class="release-header">
+        <h1>バージョン {release.data.version}</h1>
+        <div class="server-banner">
+          <span class="server-badge">🚀 Server Output</span>
+          <span class="access-info">アクセス時刻: {accessTime}</span>
+        </div>
+        <div class="meta">
+          <time datetime={release.data.date.toISOString()}>
+            {
+              release.data.date.toLocaleDateString("ja-JP", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })
+            }
+          </time>
+          <div class="badges">
+            <span
+              class={`badge ${getCategoryBadgeClass(release.data.category)}`}
+            >
+              {release.data.category.toUpperCase()}
+            </span>
+            {
+              release.data.breaking && (
+                <span class="badge badge-breaking">Breaking Change</span>
+              )
+            }
+          </div>
+        </div>
+        <div class="stats">
+          <span class="stat-item">👁️ {viewCount} views</span>
+        </div>
+      </header>
+
+      {
+        (release.data.features ||
+          release.data.fixes ||
+          release.data.deprecated) && (
+          <div class="summary-box">
+            {release.data.features && release.data.features.length > 0 && (
+              <div class="summary-section">
+                <h2>✨ 新機能</h2>
+                <ul>
+                  {release.data.features.map((feature) => (
+                    <li>{feature}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {release.data.fixes && release.data.fixes.length > 0 && (
+              <div class="summary-section">
+                <h2>🐛 修正</h2>
+                <ul>
+                  {release.data.fixes.map((fix) => (
+                    <li>{fix}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {release.data.deprecated && release.data.deprecated.length > 0 && (
+              <div class="summary-section">
+                <h2>⚠️ 非推奨</h2>
+                <ul>
+                  {release.data.deprecated.map((item) => (
+                    <li>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )
+      }
+
+      <div class="content">
+        <Content />
+      </div>
+
+      <nav class="pagination">
+        {
+          prevRelease && (
+            <a href={`/releases-server/${prevRelease.id}`} class="prev">
+              ← {prevRelease.data.version}
+            </a>
+          )
+        }
+        {
+          nextRelease && (
+            <a href={`/releases-server/${nextRelease.id}`} class="next">
+              {nextRelease.data.version} →
+            </a>
+          )
+        }
+      </nav>
+    </article>
+
+    <section class="info-section">
+      <h2>Server Output の特徴</h2>
+      <p>
+        このページはリクエストごとに動的に生成されています。 静的生成版（<a
+          href={`/releases/${slug}`}>こちら</a
+        >）とは異なり、 以下の機能が実現可能です：
+      </p>
+      <ul>
+        <li>リアルタイムの閲覧数の表示</li>
+        <li>ユーザー認証に基づくコンテンツの出し分け</li>
+        <li>外部APIからの最新データの取得</li>
+        <li>A/Bテストやパーソナライゼーション</li>
+      </ul>
+      <div class="comparison-links">
+        <h3>バージョン比較</h3>
+        <p>
+          <a href={`/releases/${slug}`}>静的生成版を見る</a> |
+          <a href={`/releases-server/${slug}`}>Server Output版を見る（現在）</a>
+        </p>
+      </div>
+    </section>
+  </main>
+</Layout>
+
+<style>
+  main {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+  }
+
+  .breadcrumb {
+    margin-bottom: 2rem;
+    color: #666;
+    font-size: 0.9rem;
+  }
+
+  .breadcrumb a {
+    color: #4f39fa;
+    text-decoration: none;
+  }
+
+  .breadcrumb a:hover {
+    text-decoration: underline;
+  }
+
+  .release-detail {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .release-header {
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 2px solid #f0f0f0;
+  }
+
+  .release-header h1 {
+    font-size: 2rem;
+    color: #333;
+    margin-bottom: 1rem;
+  }
+
+  .server-banner {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .server-badge {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .access-info {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.85rem;
+  }
+
+  .meta {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+
+  time {
+    color: #666;
+  }
+
+  .badges {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .badge-major {
+    background-color: #ffe4e1;
+    color: #d32f2f;
+  }
+
+  .badge-minor {
+    background-color: #e3f2fd;
+    color: #1976d2;
+  }
+
+  .badge-patch {
+    background-color: #f0f0f0;
+    color: #666;
+  }
+
+  .badge-breaking {
+    background-color: #fff3cd;
+    color: #856404;
+  }
+
+  .stats {
+    display: flex;
+    gap: 1.5rem;
+    color: #666;
+    font-size: 0.9rem;
+  }
+
+  .stat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .summary-box {
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .summary-section {
+    margin-bottom: 1.5rem;
+  }
+
+  .summary-section:last-child {
+    margin-bottom: 0;
+  }
+
+  .summary-section h2 {
+    font-size: 1.1rem;
+    color: #555;
+    margin-bottom: 0.75rem;
+  }
+
+  .summary-section ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .summary-section li {
+    padding: 0.5rem 0;
+    padding-left: 1.5rem;
+    color: #666;
+    position: relative;
+    line-height: 1.5;
+  }
+
+  .summary-section li::before {
+    content: "•";
+    position: absolute;
+    left: 0.5rem;
+  }
+
+  .content {
+    color: #333;
+    line-height: 1.8;
+    margin-bottom: 2rem;
+  }
+
+  .content :global(h1) {
+    display: none;
+  }
+
+  .content :global(h2) {
+    font-size: 1.5rem;
+    color: #333;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+  }
+
+  .content :global(h3) {
+    font-size: 1.2rem;
+    color: #555;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .content :global(p) {
+    margin-bottom: 1rem;
+  }
+
+  .content :global(ul),
+  .content :global(ol) {
+    margin-bottom: 1rem;
+    padding-left: 2rem;
+  }
+
+  .content :global(li) {
+    margin-bottom: 0.5rem;
+  }
+
+  .content :global(code) {
+    background-color: #f0f0f0;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.9rem;
+  }
+
+  .content :global(pre) {
+    background-color: #f5f5f5;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1rem;
+    overflow-x: auto;
+    margin-bottom: 1rem;
+  }
+
+  .content :global(pre code) {
+    background-color: transparent;
+    padding: 0;
+  }
+
+  .content :global(blockquote) {
+    border-left: 4px solid #4f39fa;
+    padding-left: 1rem;
+    margin: 1rem 0;
+    color: #666;
+  }
+
+  .pagination {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid #e0e0e0;
+  }
+
+  .pagination a {
+    color: #4f39fa;
+    text-decoration: none;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .pagination a:hover {
+    text-decoration: underline;
+  }
+
+  .pagination .prev {
+    margin-right: auto;
+  }
+
+  .pagination .next {
+    margin-left: auto;
+  }
+
+  .info-section {
+    background-color: #f9f9f9;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-top: 2rem;
+  }
+
+  .info-section h2 {
+    color: #333;
+    margin-bottom: 1rem;
+  }
+
+  .info-section h3 {
+    color: #555;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .info-section p {
+    color: #666;
+    margin-bottom: 1rem;
+    line-height: 1.6;
+  }
+
+  .info-section ul {
+    list-style-position: inside;
+    color: #666;
+    line-height: 1.8;
+  }
+
+  .info-section a {
+    color: #4f39fa;
+    text-decoration: none;
+  }
+
+  .info-section a:hover {
+    text-decoration: underline;
+  }
+
+  .comparison-links p {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  code {
+    background-color: #f0f0f0;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.9rem;
+  }
+
+  @media (max-width: 768px) {
+    .release-detail {
+      padding: 1.5rem;
+    }
+
+    .pagination {
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .server-banner {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+</style>
