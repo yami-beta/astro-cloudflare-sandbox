@@ -10,8 +10,17 @@ const url = new URL(Astro.request.url);
 const categoryFilter = url.searchParams.get("category");
 const sortOrder = url.searchParams.get("sort") || "desc";
 
+// 現在時刻を取得（未公開リリースのフィルタリング用）
+const now = new Date();
+
 // Content Collectionsからリリースノートを取得
-let releases = await getCollection("releases");
+let allReleases = await getCollection("releases");
+
+// 未公開リリース（未来の日付）をフィルタリング
+let releases = allReleases.filter((release) => release.data.date <= now);
+
+// フィルタリングされた未公開リリースの数を計算
+const unpublishedCount = allReleases.length - releases.length;
 
 // カテゴリフィルタリング
 if (categoryFilter) {
@@ -64,6 +73,13 @@ function getCategoryBadgeClass(category: string) {
         <span class="info-time">生成時刻: {requestTime}</span>
         <span class="info-count">アクセス数: {accessCount}</span>
       </div>
+      {
+        unpublishedCount > 0 && (
+          <div class="unpublished-notice">
+            <span>📅 {unpublishedCount}件の未公開リリースがあります</span>
+          </div>
+        )
+      }
     </header>
 
     <nav class="breadcrumb">
@@ -305,6 +321,21 @@ function getCategoryBadgeClass(category: string) {
     border-radius: 1rem;
     font-size: 0.9rem;
     color: #666;
+  }
+
+  .unpublished-notice {
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    background-color: #fff3cd;
+    border: 1px solid #ffeeba;
+    border-radius: 8px;
+    color: #856404;
+    text-align: center;
+  }
+
+  .unpublished-notice span {
+    font-size: 0.9rem;
+    font-weight: 500;
   }
 
   .breadcrumb {
