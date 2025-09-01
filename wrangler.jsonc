@@ -15,7 +15,7 @@
   "routes": [
     {
       "pattern": "astro-cloudflare-sandbox.yami-beta.dev",
-      "custom_domain": true
-    }
-  ]
+      "custom_domain": true,
+    },
+  ],
 }
