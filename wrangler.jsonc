@@ -12,10 +12,4 @@
   "observability": {
     "enabled": true,
   },
-  "routes": [
-    {
-      "pattern": "astro-cloudflare-sandbox.yami-beta.dev",
-      "custom_domain": true,
-    },
-  ],
 }
