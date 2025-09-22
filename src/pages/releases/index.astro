@@ -2,10 +2,52 @@
 import { getCollection } from "astro:content";
 import Layout from "../../layouts/Layout.astro";
 
-const releases = await getCollection("releases");
-const sortedReleases = releases.sort(
-  (a, b) => b.data.date.getTime() - a.data.date.getTime(),
-);
+// Server Output（SSR）を有効化
+export const prerender = false;
+
+// URLパラメータを取得
+const url = new URL(Astro.request.url);
+const categoryFilter = url.searchParams.get("category");
+const sortOrder = url.searchParams.get("sort") || "desc";
+
+// 現在時刻を取得（未公開リリースのフィルタリング用）
+const now = new Date();
+
+// Content Collectionsからリリースノートを取得
+let allReleases = await getCollection("releases");
+
+// 未公開リリース（未来の日付）をフィルタリング
+let releases = allReleases.filter((release) => release.data.date <= now);
+
+// フィルタリングされた未公開リリースの数を計算
+const unpublishedCount = allReleases.length - releases.length;
+
+// カテゴリフィルタリング
+if (categoryFilter) {
+  releases = releases.filter(
+    (release) => release.data.category === categoryFilter,
+  );
+}
+
+// ソート処理
+const sortedReleases = releases.sort((a, b) => {
+  const result = b.data.date.getTime() - a.data.date.getTime();
+  return sortOrder === "asc" ? -result : result;
+});
+
+// リクエスト時刻を取得（動的生成の証明）
+const requestTime = new Date().toLocaleString("ja-JP", {
+  timeZone: "Asia/Tokyo",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+});
+
+// アクセス数（実際のDBを使用する場合の例）
+const accessCount = Math.floor(Math.random() * 1000) + 100;
 
 function getCategoryBadgeClass(category: string) {
   switch (category) {
@@ -24,100 +66,209 @@ function getCategoryBadgeClass(category: string) {
 <Layout>
   <main>
     <header class="page-header">
-      <h1>リリースノート</h1>
-      <p>プロダクトの更新履歴とバージョン情報</p>
+      <h1>リリースノート（Server Output版）</h1>
+      <p>サーバーサイドレンダリングで動的に生成されるバージョン</p>
+      <div class="server-info">
+        <span class="info-badge">🚀 SSR</span>
+        <span class="info-time">生成時刻: {requestTime}</span>
+        <span class="info-count">アクセス数: {accessCount}</span>
+      </div>
+      {
+        unpublishedCount > 0 && (
+          <div class="unpublished-notice">
+            <span>📅 {unpublishedCount}件の未公開リリースがあります</span>
+          </div>
+        )
+      }
     </header>
 
     <nav class="breadcrumb">
-      <a href="/">ホーム</a> / リリースノート
+      <a href="/">ホーム</a> / リリースノート（Server版）
     </nav>
+
+    <div class="filter-section">
+      <h3>フィルター</h3>
+      <div class="filter-controls">
+        <div class="filter-group">
+          <label>カテゴリ:</label>
+          <div class="filter-buttons">
+            <a href="/releases" class={!categoryFilter ? "active" : ""}>
+              すべて
+            </a>
+            <a
+              href="/releases?category=major"
+              class={categoryFilter === "major" ? "active" : ""}
+            >
+              Major
+            </a>
+            <a
+              href="/releases?category=minor"
+              class={categoryFilter === "minor" ? "active" : ""}
+            >
+              Minor
+            </a>
+            <a
+              href="/releases?category=patch"
+              class={categoryFilter === "patch" ? "active" : ""}
+            >
+              Patch
+            </a>
+          </div>
+        </div>
+        <div class="filter-group">
+          <label>並び順:</label>
+          <div class="filter-buttons">
+            <a
+              href={`/releases${categoryFilter ? `?category=${categoryFilter}&` : "?"}sort=desc`}
+              class={sortOrder === "desc" ? "active" : ""}
+            >
+              新しい順
+            </a>
+            <a
+              href={`/releases${categoryFilter ? `?category=${categoryFilter}&` : "?"}sort=asc`}
+              class={sortOrder === "asc" ? "active" : ""}
+            >
+              古い順
+            </a>
+          </div>
+        </div>
+      </div>
+      {
+        categoryFilter && (
+          <p class="filter-status">
+            フィルター中: <strong>{categoryFilter.toUpperCase()}</strong>{" "}
+            リリースのみ表示
+          </p>
+        )
+      }
+    </div>
 
     <div class="releases-grid">
       {
-        sortedReleases.map((release) => (
-          <article class="release-card">
-            <div class="release-header">
-              <h2>
-                <a href={`/releases/${release.id}`}>
-                  バージョン {release.data.version}
-                </a>
-              </h2>
-              <div class="badges">
-                <span
-                  class={`badge ${getCategoryBadgeClass(release.data.category)}`}
-                >
-                  {release.data.category.toUpperCase()}
-                </span>
-                {release.data.breaking && (
-                  <span class="badge badge-breaking">Breaking Change</span>
+        sortedReleases.length > 0 ? (
+          sortedReleases.map((release) => (
+            <article class="release-card">
+              <div class="release-header">
+                <h2>
+                  <a href={`/releases/${release.id}`}>
+                    バージョン {release.data.version}
+                  </a>
+                </h2>
+                <div class="badges">
+                  <span
+                    class={`badge ${getCategoryBadgeClass(release.data.category)}`}
+                  >
+                    {release.data.category.toUpperCase()}
+                  </span>
+                  {release.data.breaking && (
+                    <span class="badge badge-breaking">Breaking Change</span>
+                  )}
+                </div>
+              </div>
+
+              <time datetime={release.data.date.toISOString()}>
+                {release.data.date.toLocaleDateString("ja-JP", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </time>
+
+              <div class="release-summary">
+                {release.data.features && release.data.features.length > 0 && (
+                  <div class="summary-section">
+                    <h3>✨ 新機能</h3>
+                    <ul>
+                      {release.data.features.slice(0, 3).map((feature) => (
+                        <li>{feature}</li>
+                      ))}
+                      {release.data.features.length > 3 && (
+                        <li class="more">
+                          他 {release.data.features.length - 3} 件...
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+                )}
+
+                {release.data.fixes && release.data.fixes.length > 0 && (
+                  <div class="summary-section">
+                    <h3>🐛 修正</h3>
+                    <ul>
+                      {release.data.fixes.slice(0, 2).map((fix) => (
+                        <li>{fix}</li>
+                      ))}
+                      {release.data.fixes.length > 2 && (
+                        <li class="more">
+                          他 {release.data.fixes.length - 2} 件...
+                        </li>
+                      )}
+                    </ul>
+                  </div>
                 )}
               </div>
-            </div>
 
-            <time datetime={release.data.date.toISOString()}>
-              {release.data.date.toLocaleDateString("ja-JP", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
-            </time>
-
-            <div class="release-summary">
-              {release.data.features && release.data.features.length > 0 && (
-                <div class="summary-section">
-                  <h3>✨ 新機能</h3>
-                  <ul>
-                    {release.data.features.slice(0, 3).map((feature) => (
-                      <li>{feature}</li>
-                    ))}
-                    {release.data.features.length > 3 && (
-                      <li class="more">
-                        他 {release.data.features.length - 3} 件...
-                      </li>
-                    )}
-                  </ul>
-                </div>
-              )}
-
-              {release.data.fixes && release.data.fixes.length > 0 && (
-                <div class="summary-section">
-                  <h3>🐛 修正</h3>
-                  <ul>
-                    {release.data.fixes.slice(0, 2).map((fix) => (
-                      <li>{fix}</li>
-                    ))}
-                    {release.data.fixes.length > 2 && (
-                      <li class="more">
-                        他 {release.data.fixes.length - 2} 件...
-                      </li>
-                    )}
-                  </ul>
-                </div>
-              )}
-            </div>
-
-            <a href={`/releases/${release.id}`} class="read-more">
-              詳細を見る →
-            </a>
-          </article>
-        ))
+              <a href={`/releases/${release.id}`} class="read-more">
+                詳細を見る →
+              </a>
+            </article>
+          ))
+        ) : (
+          <div class="no-results">
+            <p>該当するリリースノートが見つかりませんでした。</p>
+            <a href="/releases">すべてのリリースを表示</a>
+          </div>
+        )
       }
     </div>
 
     <section class="info-section">
-      <h2>Content Collections について</h2>
+      <h2>Server Output について</h2>
       <p>
-        このページは Astro の Content Collections
-        機能を使用して構築されています。 リリースノートは <code
-          >src/data/releases/</code
-        > ディレクトリの Markdown ファイルとして管理され、 型安全なスキーマによって検証されています。
+        このページはリクエストごとに動的に生成されています。 静的生成版（<a
+          href="/releases-static">こちら</a
+        >）とは異なり、 以下の機能が利用可能です：
       </p>
       <ul>
-        <li>Zodスキーマによるフロントマター検証</li>
-        <li>TypeScript による型安全性</li>
-        <li>ビルド時の静的生成</li>
-        <li>自動的なルーティング生成</li>
+        <li>動的なフィルタリング（URLパラメータによる）</li>
+        <li>リアルタイムデータの表示（アクセス数など）</li>
+        <li>ユーザー固有のコンテンツ配信（認証連携時）</li>
+        <li>外部APIとの連携（最新情報の取得）</li>
       </ul>
+      <div class="comparison">
+        <h3>静的生成版との比較</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>機能</th>
+              <th>静的生成版</th>
+              <th>Server Output版</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>生成タイミング</td>
+              <td>ビルド時</td>
+              <td>リクエスト時</td>
+            </tr>
+            <tr>
+              <td>パフォーマンス</td>
+              <td>高速（CDN配信）</td>
+              <td>動的（計算が必要）</td>
+            </tr>
+            <tr>
+              <td>動的機能</td>
+              <td>不可</td>
+              <td>可能</td>
+            </tr>
+            <tr>
+              <td>コスト</td>
+              <td>低い</td>
+              <td>高い（計算リソース）</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </section>
   </main>
 </Layout>
@@ -143,6 +294,48 @@ function getCategoryBadgeClass(category: string) {
   .page-header p {
     color: #666;
     font-size: 1.1rem;
+    margin-bottom: 1rem;
+  }
+
+  .server-info {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+  }
+
+  .info-badge {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .info-time,
+  .info-count {
+    background-color: #f0f0f0;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.9rem;
+    color: #666;
+  }
+
+  .unpublished-notice {
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    background-color: #fff3cd;
+    border: 1px solid #ffeeba;
+    border-radius: 8px;
+    color: #856404;
+    text-align: center;
+  }
+
+  .unpublished-notice span {
+    font-size: 0.9rem;
+    font-weight: 500;
   }
 
   .breadcrumb {
@@ -157,6 +350,73 @@ function getCategoryBadgeClass(category: string) {
 
   .breadcrumb a:hover {
     text-decoration: underline;
+  }
+
+  .filter-section {
+    background-color: #f9f9f9;
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+  }
+
+  .filter-section h3 {
+    color: #333;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+  }
+
+  .filter-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .filter-group {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .filter-group label {
+    color: #555;
+    font-weight: 500;
+    min-width: 80px;
+  }
+
+  .filter-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .filter-buttons a {
+    padding: 0.5rem 1rem;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    color: #666;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+
+  .filter-buttons a:hover {
+    border-color: #4f39fa;
+    color: #4f39fa;
+  }
+
+  .filter-buttons a.active {
+    background-color: #4f39fa;
+    color: white;
+    border-color: #4f39fa;
+  }
+
+  .filter-status {
+    margin-top: 1rem;
+    color: #666;
+    padding: 0.5rem;
+    background-color: #e8f5e9;
+    border-radius: 8px;
   }
 
   .releases-grid {
@@ -288,6 +548,27 @@ function getCategoryBadgeClass(category: string) {
     text-decoration: underline;
   }
 
+  .no-results {
+    text-align: center;
+    padding: 3rem;
+    background-color: #f9f9f9;
+    border-radius: 12px;
+  }
+
+  .no-results p {
+    color: #666;
+    margin-bottom: 1rem;
+  }
+
+  .no-results a {
+    color: #4f39fa;
+    text-decoration: none;
+  }
+
+  .no-results a:hover {
+    text-decoration: underline;
+  }
+
   .info-section {
     background-color: #f9f9f9;
     padding: 2rem;
@@ -296,6 +577,12 @@ function getCategoryBadgeClass(category: string) {
 
   .info-section h2 {
     color: #333;
+    margin-bottom: 1rem;
+  }
+
+  .info-section h3 {
+    color: #555;
+    margin-top: 1.5rem;
     margin-bottom: 1rem;
   }
 
@@ -311,6 +598,43 @@ function getCategoryBadgeClass(category: string) {
     line-height: 1.8;
   }
 
+  .info-section a {
+    color: #4f39fa;
+    text-decoration: none;
+  }
+
+  .info-section a:hover {
+    text-decoration: underline;
+  }
+
+  .comparison {
+    margin-top: 2rem;
+  }
+
+  .comparison table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+  }
+
+  .comparison th,
+  .comparison td {
+    padding: 0.75rem;
+    text-align: left;
+    border: 1px solid #e0e0e0;
+  }
+
+  .comparison th {
+    background-color: #f0f0f0;
+    font-weight: 600;
+    color: #333;
+  }
+
+  .comparison td {
+    background-color: white;
+    color: #666;
+  }
+
   code {
     background-color: #f0f0f0;
     padding: 0.2rem 0.4rem;
@@ -323,6 +647,19 @@ function getCategoryBadgeClass(category: string) {
     .release-header {
       flex-direction: column;
       align-items: flex-start;
+    }
+
+    .filter-group {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .comparison {
+      overflow-x: auto;
+    }
+
+    .comparison table {
+      min-width: 500px;
     }
   }
 </style>
