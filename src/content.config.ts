@@ -4,6 +4,7 @@ import { glob } from "astro/loaders";
 const releases = defineCollection({
   loader: glob({ pattern: "**/*.md", base: "./src/data/releases" }),
   schema: z.object({
+    title: z.string(),
     version: z.string(),
     date: z.coerce.date(),
     category: z.enum(["major", "minor", "patch"]),
